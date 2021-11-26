@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using Microsoft.Scripting.Hosting;
 using IronPython.Runtime;
 using Microsoft.Scripting.Runtime;
+using IronOcr;
 
 namespace Syllable_Windows_App
 {
