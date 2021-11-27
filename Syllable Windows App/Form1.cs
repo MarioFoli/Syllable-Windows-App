@@ -26,14 +26,35 @@ namespace Syllable_Windows_App
         Bitmap image;
         private Thread camera;
         bool isCameraRunning = false;
+        string installLocation = Application.StartupPath;
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            Environment.Exit(0);
+        }
 
         private void CaptureCamera()
         {
             camera = new Thread(new ThreadStart(CaptureCameraCallback));
             camera.Start();
         }
-
-        private void CaptureCameraCallback()
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (button3.Text.Equals("Start Camera"))
+            {
+                CaptureCamera();
+                button3.Text = "Stop Camera";
+                isCameraRunning = true;
+            }
+            else
+            {
+                capture.Release();
+                button3.Text = "Start";
+                isCameraRunning = false;
+            }
+        }
+  
+            private void CaptureCameraCallback()
         {
             frame = new Mat();
             capture = new VideoCapture(0);
@@ -66,18 +87,35 @@ namespace Syllable_Windows_App
 
         }
 
-
-        private void button1_Click(object sender, EventArgs e)
+        private void button4_Click(object sender, EventArgs e)
         {
+            if (isCameraRunning)
+            {
+                // Take snapshot of the current image generate by OpenCV in the Picture Box
+                Bitmap snapshot = new Bitmap(pictureBox1.Image);
+
+                // Save in some directory
+                // in this example, we'll generate a random filename e.g 47059681-95ed-4e95-9b50-320092a3d652.png
+                // snapshot.Save(@"C:\Users\sdkca\Desktop\mysnapshot.png", ImageFormat.Png);
+                snapshot.Save(string.Format(installLocation + "\\Png.png", ImageFormat.Png, Guid.NewGuid()));
+            }
+            else
+            {
+                Console.WriteLine("Cannot take picture if the camera isn't capturing image!");
+            }
+        }
+            private void button1_Click(object sender, EventArgs e)
+        {
+            Debug.WriteLine(installLocation);
             string iniPhrase = textBox1.Text;
             string[] iniWords = iniPhrase.Split(' ');
             StringBuilder finalResult = new StringBuilder("");
             foreach (string word in iniWords)
             {
                 int sbLength = iniWords.Length;
-                string arg = string.Format(@"C:\Users\greni\Desktop\Projects\Syllable\splitter.py {0}", word);
+                string arg = string.Format(@installLocation + "\\splitter.py {0}", word);
                 Process p = new Process();
-                p.StartInfo = new ProcessStartInfo(@"C:\Python\python.exe", arg)
+                p.StartInfo = new ProcessStartInfo(@installLocation + "\\python.exe", arg)
                 {
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
@@ -95,10 +133,10 @@ namespace Syllable_Windows_App
         private void button2_Click(object sender, EventArgs e)
         {
 
-            var testImagePath = "C:/Users/greni/Desktop/Projects/Syllable/Png.png";
+            var testImagePath = installLocation + "Png.png";
             try
             {
-                using (var engine = new TesseractEngine(@"C:\Users\greni\Desktop\Projects\Syllable", "eng", EngineMode.Default))
+                using (var engine = new TesseractEngine(@installLocation, "eng", EngineMode.Default))
                 {
                     using (var img = Pix.LoadFromFile(testImagePath))
                     {
@@ -110,9 +148,9 @@ namespace Syllable_Windows_App
                             foreach (string word in iniWords)
                             {
                                 int sbLength = iniWords.Length;
-                                string arg = string.Format(@"C:\Users\greni\Desktop\Projects\Syllable\splitter.py {0}", word);
+                                string arg = string.Format(@installLocation + "\\splitter.py {0}", word);
                                 Process p = new Process();
-                                p.StartInfo = new ProcessStartInfo(@"C:\Python\python.exe", arg)
+                                p.StartInfo = new ProcessStartInfo(@installLocation + "\\Python.exe", arg)
                                 {
                                     RedirectStandardOutput = true,
                                     UseShellExecute = false,
@@ -132,40 +170,6 @@ namespace Syllable_Windows_App
             catch (Exception ex)
             {
                 Console.WriteLine(e);
-            }
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            if (button3.Text.Equals("Start Camera"))
-            {
-                CaptureCamera();
-                button3.Text = "Stop Camera";
-                isCameraRunning = true;
-            }
-            else
-            {
-                capture.Release();
-                button3.Text = "Start";
-                isCameraRunning = false;
-            }
-        }
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-            if (isCameraRunning)
-            {
-                // Take snapshot of the current image generate by OpenCV in the Picture Box
-                Bitmap snapshot = new Bitmap(pictureBox1.Image);
-
-                // Save in some directory
-                // in this example, we'll generate a random filename e.g 47059681-95ed-4e95-9b50-320092a3d652.png
-                // snapshot.Save(@"C:\Users\sdkca\Desktop\mysnapshot.png", ImageFormat.Png);
-                snapshot.Save(string.Format(@"C:\Users\greni\Desktop\Projects\Syllable\{0}.png", ImageFormat.Png, Guid.NewGuid()));
-            }
-            else
-            {
-                Console.WriteLine("Cannot take picture if the camera isn't capturing image!");
             }
         }
     }
