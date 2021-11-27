@@ -8,7 +8,8 @@ using System.Net.Sockets;
 using Microsoft.Scripting.Hosting;
 using IronPython.Runtime;
 using Microsoft.Scripting.Runtime;
-using IronOcr;
+using Tesseract;
+using System.Text;
 
 namespace Syllable_Windows_App
 {
@@ -18,34 +19,15 @@ namespace Syllable_Windows_App
         {
             InitializeComponent();
         }
-
         private void button1_Click(object sender, EventArgs e)
         {
-            string iniWord = textBox1.Text;
-            string arg = string.Format(@"C:\Users\greni\Desktop\Projects\Syllable\splitter.py {0}", iniWord);
-            Process p = new Process();
-            p.StartInfo = new ProcessStartInfo(@"C:\Python\python.exe", arg)
+            string iniPhrase = textBox1.Text;
+            string[] iniWords = iniPhrase.Split(' ');
+            StringBuilder finalResult = new StringBuilder("");
+            foreach (string word in iniWords)
             {
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            p.Start();
-            string output = p.StandardOutput.ReadToEnd(); //returns python script results 
-            p.WaitForExit();
-            label3.Text = output;
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            var Ocr = new IronTesseract();
-            using (var Input = new OcrInput("testimage.png"))
-            {
-                // Input.Deskew();  // use if image not straight
-                // Input.DeNoise(); // use if image contains digital noise
-                var Result = Ocr.Read(Input);
-                string iniWord = Result.Text;
-                string arg = string.Format(@"C:\Users\greni\Desktop\Projects\Syllable\splitter.py {0}", iniWord);
+                int sbLength = iniWords.Length;
+                string arg = string.Format(@"C:\Users\greni\Desktop\Projects\Syllable\splitter.py {0}", word);
                 Process p = new Process();
                 p.StartInfo = new ProcessStartInfo(@"C:\Python\python.exe", arg)
                 {
@@ -54,11 +36,54 @@ namespace Syllable_Windows_App
                     CreateNoWindow = true
                 };
                 p.Start();
-                string output = p.StandardOutput.ReadToEnd(); //returns python script results 
+                finalResult.Append(p.StandardOutput.ReadToEnd());
+                Debug.WriteLine(finalResult);
+                label3.Text = finalResult.ToString();
                 p.WaitForExit();
-                label5.Text = output;
+            }
 
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+
+            var testImagePath = "C:/Users/greni/Desktop/Projects/Syllable/testimage.png";
+            try
+            {
+                using (var engine = new TesseractEngine(@"C:\Users\greni\Desktop\Projects\Syllable", "eng", EngineMode.Default))
+                {
+                    using (var img = Pix.LoadFromFile(testImagePath))
+                    {
+                        using (var page = engine.Process(img))
+                        {
+                            string iniPhrase = page.GetText();
+                            string[] iniWords = iniPhrase.Split(' ');
+                            foreach (string word in iniWords)
+                            {
+                                Console.WriteLine(word);
+                                string arg = string.Format(@"C:\Users\greni\Desktop\Projects\Syllable\splitter.py {0}", word);
+                                Process p = new Process();
+                                p.StartInfo = new ProcessStartInfo(@"C:\Python\python.exe", arg)
+                                {
+                                    RedirectStandardOutput = true,
+                                    UseShellExecute = false,
+                                    CreateNoWindow = true
+                                };
+                                p.Start();
+                                string output = p.StandardOutput.ReadToEnd(); //returns python script results 
+                                p.WaitForExit();
+                                label5.Text = output;
+                            }
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(e);
             }
         }
     }
 }
+            

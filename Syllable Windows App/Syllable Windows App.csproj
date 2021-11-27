@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IronOcr" Version="2021.11.0" />
     <PackageReference Include="IronPython" Version="2.7.11" />
+    <PackageReference Include="Tesseract" Version="4.1.1" />
   </ItemGroup>
 
   <ItemGroup>
