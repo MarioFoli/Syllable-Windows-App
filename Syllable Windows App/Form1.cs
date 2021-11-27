@@ -10,15 +10,63 @@ using IronPython.Runtime;
 using Microsoft.Scripting.Runtime;
 using Tesseract;
 using System.Text;
+using OpenCvSharp;
+using OpenCvSharp.Extensions;
+using System.Drawing;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace Syllable_Windows_App
 {
     public partial class Form1 : Form
     {
+
+        VideoCapture capture;
+        Mat frame;
+        Bitmap image;
+        private Thread camera;
+        bool isCameraRunning = false;
+
+        private void CaptureCamera()
+        {
+            camera = new Thread(new ThreadStart(CaptureCameraCallback));
+            camera.Start();
+        }
+
+        private void CaptureCameraCallback()
+        {
+            frame = new Mat();
+            capture = new VideoCapture(0);
+            capture.Open(0);
+
+            if (capture.IsOpened())
+            {
+                while (isCameraRunning)
+                {
+
+                    capture.Read(frame);
+                    image = BitmapConverter.ToBitmap(frame);
+                    if (pictureBox1.Image != null)
+                    {
+                        pictureBox1.Image.Dispose();
+                    }
+                    pictureBox1.Image = image;
+                }
+            }
+        }
+
+
         public Form1()
         {
             InitializeComponent();
         }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+
         private void button1_Click(object sender, EventArgs e)
         {
             string iniPhrase = textBox1.Text;
@@ -47,7 +95,7 @@ namespace Syllable_Windows_App
         private void button2_Click(object sender, EventArgs e)
         {
 
-            var testImagePath = "C:/Users/greni/Desktop/Projects/Syllable/testimage.png";
+            var testImagePath = "C:/Users/greni/Desktop/Projects/Syllable/Png.png";
             try
             {
                 using (var engine = new TesseractEngine(@"C:\Users\greni\Desktop\Projects\Syllable", "eng", EngineMode.Default))
@@ -58,9 +106,10 @@ namespace Syllable_Windows_App
                         {
                             string iniPhrase = page.GetText();
                             string[] iniWords = iniPhrase.Split(' ');
+                            StringBuilder finalResult = new StringBuilder("");
                             foreach (string word in iniWords)
                             {
-                                Console.WriteLine(word);
+                                int sbLength = iniWords.Length;
                                 string arg = string.Format(@"C:\Users\greni\Desktop\Projects\Syllable\splitter.py {0}", word);
                                 Process p = new Process();
                                 p.StartInfo = new ProcessStartInfo(@"C:\Python\python.exe", arg)
@@ -70,9 +119,10 @@ namespace Syllable_Windows_App
                                     CreateNoWindow = true
                                 };
                                 p.Start();
-                                string output = p.StandardOutput.ReadToEnd(); //returns python script results 
+                                finalResult.Append(p.StandardOutput.ReadToEnd());
+                                Debug.WriteLine(finalResult);
+                                label5.Text = finalResult.ToString();
                                 p.WaitForExit();
-                                label5.Text = output;
                             }
 
                         }
@@ -82,6 +132,40 @@ namespace Syllable_Windows_App
             catch (Exception ex)
             {
                 Console.WriteLine(e);
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (button3.Text.Equals("Start Camera"))
+            {
+                CaptureCamera();
+                button3.Text = "Stop Camera";
+                isCameraRunning = true;
+            }
+            else
+            {
+                capture.Release();
+                button3.Text = "Start";
+                isCameraRunning = false;
+            }
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            if (isCameraRunning)
+            {
+                // Take snapshot of the current image generate by OpenCV in the Picture Box
+                Bitmap snapshot = new Bitmap(pictureBox1.Image);
+
+                // Save in some directory
+                // in this example, we'll generate a random filename e.g 47059681-95ed-4e95-9b50-320092a3d652.png
+                // snapshot.Save(@"C:\Users\sdkca\Desktop\mysnapshot.png", ImageFormat.Png);
+                snapshot.Save(string.Format(@"C:\Users\greni\Desktop\Projects\Syllable\{0}.png", ImageFormat.Png, Guid.NewGuid()));
+            }
+            else
+            {
+                Console.WriteLine("Cannot take picture if the camera isn't capturing image!");
             }
         }
     }
