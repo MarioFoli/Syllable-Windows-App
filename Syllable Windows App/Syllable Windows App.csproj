@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IronPython" Version="2.7.11" />
+    <PackageReference Include="IronOcr" Version="2021.11.0" />
     <PackageReference Include="OpenCvSharp4.Windows" Version="4.5.3.20210817" />
     <PackageReference Include="Tesseract" Version="4.1.1" />
   </ItemGroup>

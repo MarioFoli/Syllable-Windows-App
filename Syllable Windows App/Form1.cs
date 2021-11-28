@@ -1,13 +1,8 @@
 using System;
-using Microsoft.Scripting;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using IronPython.Hosting;
 using System.Net.Sockets;
-using Microsoft.Scripting.Hosting;
-using IronPython.Runtime;
-using Microsoft.Scripting.Runtime;
 using Tesseract;
 using System.Text;
 using OpenCvSharp;
@@ -15,6 +10,9 @@ using OpenCvSharp.Extensions;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using IronOcr;
 
 namespace Syllable_Windows_App
 {
@@ -91,13 +89,8 @@ namespace Syllable_Windows_App
         {
             if (isCameraRunning)
             {
-                // Take snapshot of the current image generate by OpenCV in the Picture Box
                 Bitmap snapshot = new Bitmap(pictureBox1.Image);
-
-                // Save in some directory
-                // in this example, we'll generate a random filename e.g 47059681-95ed-4e95-9b50-320092a3d652.png
-                // snapshot.Save(@"C:\Users\sdkca\Desktop\mysnapshot.png", ImageFormat.Png);
-                snapshot.Save(string.Format(installLocation + "\\Png.png", ImageFormat.Png, Guid.NewGuid()));
+                snapshot.Save(string.Format(installLocation + "\\Png.png", System.Drawing.Imaging.ImageFormat.Png, Guid.NewGuid()));
             }
             else
             {
@@ -106,72 +99,60 @@ namespace Syllable_Windows_App
         }
             private void button1_Click(object sender, EventArgs e)
         {
-            Debug.WriteLine(installLocation);
             string iniPhrase = textBox1.Text;
-            string[] iniWords = iniPhrase.Split(' ');
+            string iniPhraseLower = iniPhrase.ToLower();
+            string[] iniWords = iniPhraseLower.Split(' ');
             StringBuilder finalResult = new StringBuilder("");
             foreach (string word in iniWords)
             {
-                int sbLength = iniWords.Length;
-                string arg = string.Format(@installLocation + "\\splitter.py {0}", word);
-                Process p = new Process();
-                p.StartInfo = new ProcessStartInfo(@installLocation + "\\python.exe", arg)
+                int counter = 0;
+                string line;
+                StreamReader words = new StreamReader(installLocation + "words.txt");
+                while ((line = words.ReadLine()) != null)
                 {
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                p.Start();
-                finalResult.Append(p.StandardOutput.ReadToEnd());
-                Debug.WriteLine(finalResult);
-                label3.Text = finalResult.ToString();
-                p.WaitForExit();
-            }
+                    if (line.Equals(word))
+                    {
+                        int foundWord = counter;
+                        string lines = File.ReadLines(installLocation + "finishedwords.txt").Skip(foundWord).First();
+                        finalResult.Append(lines + " ");
+                        label1.Text = finalResult.ToString();
 
+                    }
+                    counter++;
+                }
+            }
         }
+
 
         private void button2_Click(object sender, EventArgs e)
         {
-
-            var testImagePath = installLocation + "Png.png";
-            try
+            string iniPhrase = new IronTesseract().Read(installLocation + "Png.png").Text;
+            Debug.WriteLine(iniPhrase);
+            string iniPhraseLower = iniPhrase.ToLower();
+            string[] iniWords = iniPhraseLower.Split(' ');
+            StringBuilder finalResult = new StringBuilder("");
+            foreach (string word in iniWords)
             {
-                using (var engine = new TesseractEngine(@installLocation, "eng", EngineMode.Default))
+                int counter = 0;
+                string line;
+                StreamReader words = new StreamReader(installLocation + "words.txt");
+                while ((line = words.ReadLine()) != null)
                 {
-                    using (var img = Pix.LoadFromFile(testImagePath))
+                    if (line.Equals(word))
                     {
-                        using (var page = engine.Process(img))
-                        {
-                            string iniPhrase = page.GetText();
-                            string[] iniWords = iniPhrase.Split(' ');
-                            StringBuilder finalResult = new StringBuilder("");
-                            foreach (string word in iniWords)
-                            {
-                                int sbLength = iniWords.Length;
-                                string arg = string.Format(@installLocation + "\\splitter.py {0}", word);
-                                Process p = new Process();
-                                p.StartInfo = new ProcessStartInfo(@installLocation + "\\Python.exe", arg)
-                                {
-                                    RedirectStandardOutput = true,
-                                    UseShellExecute = false,
-                                    CreateNoWindow = true
-                                };
-                                p.Start();
-                                finalResult.Append(p.StandardOutput.ReadToEnd());
-                                Debug.WriteLine(finalResult);
-                                label5.Text = finalResult.ToString();
-                                p.WaitForExit();
-                            }
+                        int foundWord = counter;
+                        string lines = File.ReadLines(installLocation + "finishedwords.txt").Skip(foundWord).First();
+                        finalResult.Append(lines + " ");
+                        Debug.WriteLine(finalResult.ToString());
+                        label5.Text = finalResult.ToString();
 
-                        }
                     }
+                    counter++;
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(e);
-            }
+
         }
+        
     }
 }
             
