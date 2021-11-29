@@ -41,7 +41,7 @@ namespace Syllable_Windows_App
             if (button3.Text.Equals("Start Camera"))
             {
                 CaptureCamera();
-                button3.Text = "Stop Camera";
+                button3.Text = "Stop Program";
                 isCameraRunning = true;
             }
             else
@@ -126,8 +126,8 @@ namespace Syllable_Windows_App
 
         private void button2_Click(object sender, EventArgs e)
         {
+            //ignore puncuation
             string iniPhrase = new IronTesseract().Read(installLocation + "Png.png").Text;
-            Debug.WriteLine(iniPhrase);
             string iniPhraseLower = iniPhrase.ToLower();
             string[] iniWords = iniPhraseLower.Split(' ');
             StringBuilder finalResult = new StringBuilder("");
@@ -143,16 +143,20 @@ namespace Syllable_Windows_App
                         int foundWord = counter;
                         string lines = File.ReadLines(installLocation + "finishedwords.txt").Skip(foundWord).First();
                         finalResult.Append(lines + " ");
-                        Debug.WriteLine(finalResult.ToString());
                         label5.Text = finalResult.ToString();
+                        counter = 0;
 
+                    } else if (!line.Equals(word) && counter >= 370098)
+                    {
+                        finalResult.Append(word + " ");
+                        Debug.Write(finalResult.ToString());
+                        label5.Text = finalResult.ToString();
                     }
                     counter++;
                 }
             }
 
         }
-        
     }
 }
             
