@@ -100,10 +100,11 @@ namespace Syllable_Windows_App
             private void button1_Click(object sender, EventArgs e)
         {
             string iniPhrase = textBox1.Text;
-            string iniPhraseLower = iniPhrase.ToLower();
-            string[] iniWords = iniPhraseLower.Split(' ');
+            string iniPhraseLower = iniPhrase.ToLower(); //turns everything lowercase
+            iniPhraseLower = iniPhraseLower.StripPunctuation(); //strips punctuation from text
+            string[] iniWords = iniPhraseLower.Split(' '); //splits word into an array based on spaces
             StringBuilder finalResult = new StringBuilder("");
-            foreach (string word in iniWords)
+            foreach (string word in iniWords) //for every word in the array, finds the word in words.txt, marks line number, then finds the line number in finishedwords.txt, which is the syllabized word
             {
                 int counter = 0;
                 string line;
@@ -115,8 +116,15 @@ namespace Syllable_Windows_App
                         int foundWord = counter;
                         string lines = File.ReadLines(installLocation + "finishedwords.txt").Skip(foundWord).First();
                         finalResult.Append(lines + " ");
-                        label1.Text = finalResult.ToString();
+                        label5.Text = finalResult.ToString();
+                        counter = 0;
 
+                    }
+                    else if (!line.Equals(word) && counter >= 370098)
+                    {
+                        finalResult.Append(word + " ");
+                        Debug.Write(finalResult.ToString());
+                        label5.Text = finalResult.ToString();
                     }
                     counter++;
                 }
@@ -126,12 +134,12 @@ namespace Syllable_Windows_App
 
         private void button2_Click(object sender, EventArgs e)
         {
-            //ignore puncuation
-            string iniPhrase = new IronTesseract().Read(installLocation + "Png.png").Text;
-            string iniPhraseLower = iniPhrase.ToLower();
-            string[] iniWords = iniPhraseLower.Split(' ');
-            StringBuilder finalResult = new StringBuilder("");
-            foreach (string word in iniWords)
+            string iniPhrase = new IronTesseract().Read(installLocation + "Png.png").Text; // grabs words from image
+            string iniPhraseLower = iniPhrase.ToLower(); //turns everything lowercase
+            iniPhraseLower = iniPhraseLower.StripPunctuation(); //strips punctuation from text
+            string[] iniWords = iniPhraseLower.Split(' '); //splits word into an array based on spaces
+            StringBuilder finalResult = new StringBuilder(""); 
+            foreach (string word in iniWords) //for every word in the array, finds the word in words.txt, marks line number, then finds the line number in finishedwords.txt, which is the syllabized word
             {
                 int counter = 0;
                 string line;
